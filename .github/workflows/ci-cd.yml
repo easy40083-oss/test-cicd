@@ -1,11 +1,10 @@
-name: CI
+name: CI-CD
 
 # 每次 push 到 main 分支就觸發
 on:
   push:
     branches: [main]
 
-# 讓 workflow 有權限把映像推到 GitHub Container Registry
 permissions:
   contents: read
   packages: write
@@ -14,52 +13,52 @@ env:
   IMAGE_NAME: account-app
 
 jobs:
-  # ---- 工作一:測試 ----
+  # ---- 工作一:測試(在 GitHub 雲端跑)----
   test:
     name: 測試與程式碼檢查
     runs-on: ubuntu-latest
     steps:
       - name: 取出程式碼
         uses: actions/checkout@v4
-
       - name: 安裝 Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: 安裝依賴
         run: pip install -r requirements-dev.txt
-
       - name: 程式碼風格檢查
         run: flake8 app.py --max-line-length=120
-
       - name: 執行單元測試
         run: pytest tests/ -v
 
-  # ---- 工作二:建置並推送映像 ----
-  build-and-push:
-    name: 建置並推送 Docker 映像
-    needs: test          # 測試通過才會執行
-    runs-on: ubuntu-latest
+  # ---- 工作二:部署到本機 k8s(在你的 self-hosted runner 上跑)----
+  deploy:
+    name: 建映像並滾動更新到本機 k8s
+    needs: test              # 測試通過才部署
+    runs-on: self-hosted     # 關鍵:指定在你電腦的 runner 上執行
     steps:
       - name: 取出程式碼
         uses: actions/checkout@v4
 
-      - name: 準備小寫的帳號名稱
-        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+      - name: 用這次 commit 的代號當映像 tag
+        shell: pwsh
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $env:GITHUB_ENV
 
-      - name: 登入 GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 在本機 build 映像
+        shell: pwsh
+        run: docker build -t account-app:${{ env.IMAGE_TAG }} .
 
-      - name: 建置並推送映像
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:latest
+      - name: 套用 k8s 設定(確保 service/secret 存在)
+        shell: pwsh
+        run: |
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/deployment.yaml
+
+      - name: 觸發滾動更新(把映像換成這次的新版本)
+        shell: pwsh
+        run: kubectl set image deployment/account-app account-app=account-app:${{ env.IMAGE_TAG }}
+
+      - name: 等待滾動更新完成
+        shell: pwsh
+        run: kubectl rollout status deployment/account-app --timeout=120s

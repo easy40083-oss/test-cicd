@@ -35,7 +35,7 @@ spec:
             - containerPort: 5000
           env:
             - name: APP_VERSION
-              value: "v1.1.0"
+              value: "v2.0.0"
             - name: DB_PATH
               value: "/app/data/accounts.db"
             - name: SECRET_KEY
