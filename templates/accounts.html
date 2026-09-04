@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>已申請帳號清單</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background: #f0f2f5; padding: 30px; }
+    .wrap { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 30px; }
+    h1 { font-size: 20px; color: #1a1a2e; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eef0f4; }
+    th { color: #888; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    tr:hover td { background: #fafbff; }
+    a { color: #4361ee; text-decoration: none; }
+    .empty { color: #aaa; padding: 30px; text-align: center; }
+    .footer { margin-top: 20px; font-size: 12px; color: #aab; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>已申請帳號清單</h1>
+    {% if accounts %}
+    <table>
+      <thead>
+        <tr><th>ID</th><th>姓名</th><th>工號</th><th>帳號</th><th>電話</th><th>申請時間</th></tr>
+      </thead>
+      <tbody>
+        {% for a in accounts %}
+        <tr>
+          <td>{{ a.id }}</td><td>{{ a.name }}</td><td>{{ a.emp_id }}</td>
+          <td>{{ a.username }}</td><td>{{ a.phone }}</td><td>{{ a.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">尚無資料</div>
+    {% endif %}
+    <p class="footer">版本 {{ version }} &middot; <a href="/">返回申請頁</a></p>
+  </div>
+</body>
+</html>

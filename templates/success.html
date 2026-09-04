@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>申請成功</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background: #f0f2f5; display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      max-width: 420px; padding: 40px; text-align: center; }
+    .check { width: 64px; height: 64px; background: #def7ec; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+      font-size: 32px; color: #0e9f6e; }
+    h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 10px; }
+    p { color: #555; font-size: 15px; line-height: 1.6; }
+    .name { color: #4361ee; font-weight: 600; }
+    a { display: inline-block; margin-top: 24px; padding: 10px 20px; background: #4361ee;
+      color: #fff; text-decoration: none; border-radius: 8px; font-size: 15px; }
+    .footer { margin-top: 20px; font-size: 12px; color: #aab; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="check">&#10003;</div>
+    <h1>申請成功!</h1>
+    <p><span class="name">{{ name }}</span> 您好,<br>帳號 <strong>{{ username }}</strong> 已建立完成。</p>
+    <a href="/">返回申請頁</a>
+    <p class="footer">版本 {{ version }}</p>
+  </div>
+</body>
+</html>

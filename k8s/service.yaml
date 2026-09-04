@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-app
+  labels:
+    app: account-app
+spec:
+  # NodePort 讓你在本地 minikube/kind 用瀏覽器連進來測試
+  type: NodePort
+  selector:
+    app: account-app
+  ports:
+    - port: 80          # Service 對內的埠
+      targetPort: 5000  # 對應到容器的埠
+      nodePort: 30080   # 對外的埠(30000-32767),瀏覽器用 <node-ip>:30080 存取

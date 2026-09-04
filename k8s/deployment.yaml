@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-app
+  labels:
+    app: account-app
+spec:
+  # 跑 3 個副本,滾動更新時才看得出「一部分先換、其餘持續服務」的效果
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: account-app
+
+  # === 滾動更新策略(這是本專案 CD 的重點)===
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # 更新期間最多可「多」出 1 個 Pod(先起新的再關舊的,服務不中斷)
+      maxSurge: 1
+      # 更新期間最多允許 1 個 Pod 不可用
+      maxUnavailable: 1
+
+  template:
+    metadata:
+      labels:
+        app: account-app
+    spec:
+      containers:
+        - name: account-app
+          # CI 會把這個 image 換成新版本的 tag,觸發滾動更新
+          image: account-app:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "v1.1.0"
+            - name: DB_PATH
+              value: "/app/data/accounts.db"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: account-app-secret
+                  key: secret-key
+
+          # readiness probe:Pod 準備好前不會被導入流量
+          # 這是「零停機」滾動更新的關鍵 —— 新 Pod 通過檢查後,舊 Pod 才會被移除
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          # liveness probe:Pod 卡死時自動重啟
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+
+          # SQLite 資料檔放在 volume(此處用 emptyDir,Pod 重建即清空)
+          # 正式環境請改用真正的資料庫或 PVC,詳見 README 的注意事項
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+
+      volumes:
+        - name: data
+          emptyDir: {}
